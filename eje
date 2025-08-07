@@ -1,0 +1,172 @@
+# Clase base para los ítems (Herencia, Encapsulamiento, Polimorfismo)
+from abc import abstractmethod
+
+
+class ItemBiblioteca:
+    def __init__(self, titulo, autor):
+        self._titulo = titulo
+        self._autor = autor
+        self._disponible = True
+        self._prestado_a = None  # Usuario que tiene prestado el ítem
+
+    @abstractmethod
+    def obtener_info(self):
+        pass
+
+    def prestar(self, usuario):
+        if self._disponible:
+            self._disponible = False
+            self._prestado_a = usuario
+            usuario.agregar_item(self)
+            return f"{self._titulo} ha sido prestado a {usuario.nombre}."
+        return f"{self._titulo} no está disponible."
+
+    def devolver(self):
+        if not self._disponible:
+            usuario = self._prestado_a
+            usuario.devolver_item(self)
+            self._disponible = True
+            self._prestado_a = None
+            return f"{self._titulo} ha sido devuelto."
+        return f"{self._titulo} ya está disponible."
+
+    def esta_disponible(self):
+        return self._disponible
+
+    @property
+    def titulo(self):
+        return self._titulo
+
+    @property
+    def prestado_a(self):
+        return self._prestado_a
+
+
+class Libro(ItemBiblioteca):
+    def __init__(self, titulo, autor, paginas):
+        super().__init__(titulo, autor)
+        self._paginas = paginas
+
+    def obtener_info(self):
+        estado = "Sí" if self._disponible else f"No (Prestado a {self._prestado_a.nombre})"
+        return f"Libro: {self._titulo}, Autor: {self._autor}, Páginas: {self._paginas}, Disponible: {estado}"
+
+
+class Revista(ItemBiblioteca):
+    def __init__(self, titulo, autor, edicion):
+        super().__init__(titulo, autor)
+        self._edicion = edicion
+
+    def obtener_info(self):
+        estado = "Sí" if self._disponible else f"No (Prestado a {self._prestado_a.nombre})"
+        return f"Revista: {self._titulo}, Autor: {self._autor}, Edición: {self._edicion}, Disponible: {estado}"
+
+
+# Clase base para Usuario (Abstracción, Encapsulamiento, Herencia)
+class Usuario:
+    def __init__(self, nombre, id_usuario):
+        self._nombre = nombre
+        self._id_usuario = id_usuario
+        self._items_prestados = []
+
+    @abstractmethod
+    def mostrar_info(self):
+        pass
+
+    @property
+    def nombre(self):
+        return self._nombre
+
+    def agregar_item(self, item):
+        self._items_prestados.append(item)
+
+    def remover_item(self, item):
+        if item in self._items_prestados:
+            self._items_prestados.remove(item)
+
+    def listar_items(self):
+        return [item.titulo for item in self._items_prestados]
+
+
+class Estudiante(Usuario):
+    def __init__(self, nombre, id_usuario, carrera):
+        super().__init__(nombre, id_usuario)
+        self._carrera = carrera
+
+    def mostrar_info(self):
+        return f"Estudiante: {self._nombre}, ID: {self._id_usuario}, Carrera: {self._carrera}"
+
+
+class Profesor(Usuario):
+    def __init__(self, nombre, id_usuario, departamento):
+        super().__init__(nombre, id_usuario)
+        self._departamento = departamento
+
+    def mostrar_info(self):
+        return f"Profesor: {self._nombre}, ID: {self._id_usuario}, Departamento: {self._departamento}"
+
+
+# Clase Biblioteca (Gestión de ítems y usuarios)
+class Biblioteca:
+    def __init__(self, nombre):
+        self._nombre = nombre
+        self._items = []
+
+    def agregar_item(self, item):
+        self._items.append(item)
+        return f"{item.titulo} agregado a la biblioteca."
+
+    def mostrar_inventario(self):
+        return "\n".join([item.obtener_info() for item in self._items])
+
+    def prestamos_por_usuario(self):
+        info = ""
+        for item in self._items:
+            if item.prestado_a:
+                info += f"{item.titulo} → {item.prestado_a.nombre}\n"
+        return info if info else "No hay préstamos actualmente."
+
+
+# Programa principal (Instancias, uso de métodos)
+def main():
+    biblioteca = Biblioteca("Biblioteca Central")
+
+    # Crear ítems
+    libro1 = Libro("El Principito", "Antoine de Saint-Exupéry", 95)
+    revista1 = Revista("Ciencia Hoy", "Varios", 58)
+
+    # Agregar a la biblioteca
+    print(biblioteca.agregar_item(libro1))
+    print(biblioteca.agregar_item(revista1))
+
+    # Crear usuarios
+    estudiante = Estudiante("Ana López", "E001", "Ingeniería")
+    profesor = Profesor("Dr. Ramírez", "P100", "Física")
+
+    # Mostrar información de los usuarios
+    print(estudiante.mostrar_info())
+    print(profesor.mostrar_info())
+
+    # Préstamos
+    print(libro1.prestar(estudiante))
+    print(revista1.prestar(profesor))
+
+    # Inventario actualizado
+    print("\nInventario de la biblioteca:")
+    print(biblioteca.mostrar_inventario())
+
+    # Mostrar préstamos activos
+    print("\nPréstamos actuales:")
+    print(biblioteca.prestamos_por_usuario())
+
+    # Devoluciones
+    print(libro1.devolver())
+    print(revista1.devolver())
+
+    # Estado final
+    print("\nInventario después de devoluciones:")
+    print(biblioteca.mostrar_inventario())
+
+
+if __name__ == "__main__":
+    main()
